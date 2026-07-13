@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; frame-src http://127.0.0.1:*; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'none'; object-src 'none'">
+  <title>SSH Multiplex</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #090b0d;
+      --surface: #111519;
+      --surface-2: #171d22;
+      --line: #303941;
+      --line-bright: #53616d;
+      --text: #e8edf1;
+      --muted: #8c99a3;
+      --green: #69d391;
+      --amber: #f0bd63;
+      --cyan: #6fc8dd;
+      --red: #ef7d7d;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--text);
+      font-family: Bahnschrift, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      min-height: 58px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 18px;
+      padding: 10px 16px;
+      background: rgba(9, 11, 13, 0.96);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      overflow: hidden;
+      color: var(--text);
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 17px;
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .host {
+      overflow: hidden;
+      color: var(--cyan);
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .summary, .clock {
+      color: var(--muted);
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .summary strong { color: var(--green); font-weight: 650; }
+
+    .terminal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(560px, 100%), 1fr));
+      align-items: start;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .terminal-panel {
+      min-width: 0;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .terminal-panel:focus-within { border-color: var(--line-bright); }
+
+    .panel-bar {
+      height: 42px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 0 10px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .state-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 3px rgba(240, 189, 99, 0.12);
+    }
+
+    .terminal-panel.loaded .state-dot {
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(105, 211, 145, 0.12);
+    }
+
+    .terminal-panel.failed .state-dot {
+      background: var(--red);
+      box-shadow: 0 0 0 3px rgba(239, 125, 125, 0.12);
+    }
+
+    .job-name {
+      overflow: hidden;
+      color: var(--text);
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 12px;
+      font-weight: 600;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .panel-meta {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 11px;
+    }
+
+    .panel-meta a {
+      width: 26px;
+      height: 26px;
+      display: inline-grid;
+      place-items: center;
+      color: var(--cyan);
+      text-decoration: none;
+      border: 1px solid transparent;
+      border-radius: 4px;
+    }
+
+    .panel-meta a:hover, .panel-meta a:focus-visible {
+      background: #202a31;
+      border-color: var(--line-bright);
+      outline: none;
+    }
+
+    iframe {
+      width: 100%;
+      height: clamp(420px, 68vh, 760px);
+      display: block;
+      background: #202020;
+      border: 0;
+    }
+
+    .empty {
+      padding: 50px 20px;
+      color: var(--muted);
+      font-family: "Cascadia Code", Consolas, monospace;
+      text-align: center;
+    }
+
+    @media (max-width: 720px) {
+      .topbar { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+      .clock { display: none; }
+      .brand { display: block; }
+      .host { display: block; margin-top: 3px; }
+      .terminal-grid { padding: 8px; gap: 8px; }
+      iframe { height: 70vh; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>SSH MULTIPLEX // LIVE</h1>
+      <span class="host" id="host"></span>
+    </div>
+    <div class="summary"><strong id="live-count">0</strong> / <span id="total-count">0</span> online</div>
+    <time class="clock" id="clock"></time>
+  </header>
+  <main class="terminal-grid" id="terminal-grid"></main>
+
+  <script>
+    const dashboard = __DASHBOARD_CONFIG__;
+    const grid = document.getElementById('terminal-grid');
+    const host = document.getElementById('host');
+    const liveCount = document.getElementById('live-count');
+    const totalCount = document.getElementById('total-count');
+    const clock = document.getElementById('clock');
+
+    host.textContent = dashboard.host;
+    totalCount.textContent = String(dashboard.terminals.length);
+
+    function updateCount() {
+      liveCount.textContent = String(document.querySelectorAll('.terminal-panel.loaded').length);
+    }
+
+    function createPanel(terminal) {
+      const panel = document.createElement('section');
+      panel.className = 'terminal-panel';
+
+      const bar = document.createElement('div');
+      bar.className = 'panel-bar';
+
+      const dot = document.createElement('span');
+      dot.className = 'state-dot';
+      dot.setAttribute('aria-hidden', 'true');
+
+      const name = document.createElement('div');
+      name.className = 'job-name';
+      name.textContent = terminal.job_id;
+
+      const meta = document.createElement('div');
+      meta.className = 'panel-meta';
+      const port = document.createElement('span');
+      port.textContent = ':' + terminal.local_port;
+      const open = document.createElement('a');
+      open.href = terminal.url;
+      open.target = '_blank';
+      open.rel = 'noopener';
+      open.title = 'Open terminal in a separate tab';
+      open.setAttribute('aria-label', 'Open ' + terminal.job_id + ' in a separate tab');
+      open.textContent = '\u2197';
+      meta.append(port, open);
+
+      const frame = document.createElement('iframe');
+      frame.src = terminal.url;
+      frame.title = terminal.job_id + ' read-only terminal';
+      frame.loading = 'eager';
+      frame.addEventListener('load', () => {
+        panel.classList.remove('failed');
+        panel.classList.add('loaded');
+        updateCount();
+      });
+      frame.addEventListener('error', () => {
+        panel.classList.remove('loaded');
+        panel.classList.add('failed');
+        updateCount();
+      });
+
+      bar.append(dot, name, meta);
+      panel.append(bar, frame);
+      return panel;
+    }
+
+    if (dashboard.terminals.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = 'NO ACTIVE TERMINALS';
+      grid.append(empty);
+    } else {
+      dashboard.terminals.forEach((terminal) => grid.append(createPanel(terminal)));
+    }
+
+    function tick() {
+      clock.textContent = new Date().toLocaleTimeString([], {hour12: false});
+    }
+    tick();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>

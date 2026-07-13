@@ -1,0 +1,7 @@
+interface:
+  display_name: "SSHelp"
+  short_description: "Run, diagnose, observe, and safely edit over SSH"
+  default_prompt: "Use $sshelp to run, diagnose, observe, or safely edit work on my SSH host."
+
+policy:
+  allow_implicit_invocation: true

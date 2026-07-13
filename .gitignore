@@ -1,0 +1,27 @@
+# Local agent and editor state
+/.agents/
+/.codex/
+/.reasonix/
+/.local/
+/.sshelp/
+/.srd-tmp/
+/.vscode/
+/.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# SSHelp runtime state in any example project
+**/.sshelp/
+**/.srd-tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
