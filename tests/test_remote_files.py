@@ -76,7 +76,7 @@ class LocalTransactionTests(unittest.TestCase):
             finally:
                 os.chdir(previous)
 
-    @mock.patch("_remote_files_common.os.name", "nt")
+    @unittest.skipUnless(os.name == "nt", "Windows-specific ACL behavior")
     def test_windows_checkout_inherits_the_workspace_acl(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             checkout_id, directory = common.create_checkout_directory(Path(temporary))

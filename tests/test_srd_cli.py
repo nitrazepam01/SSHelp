@@ -52,6 +52,24 @@ class ExecTests(unittest.TestCase):
         self.assertIn("exec git status --short", command[-1])
 
     @mock.patch("srd.subprocess.run")
+    def test_exec_quotes_awk_program_as_one_remote_argument(self, mocked_run: mock.Mock) -> None:
+        mocked_run.return_value = subprocess.CompletedProcess([], 0, b"1 row\n", b"")
+        program = "/^[0-9]/{print NR, $0}"
+        args = ssh_args(
+            cwd="/project",
+            timeout=30,
+            max_output_bytes=1024 * 1024,
+            command=["--", "awk", program, "Instance/real_data/50_1.txt"],
+        )
+        cli.run_exec(args)
+        self.assertIs(mocked_run.call_args.kwargs["shell"], False)
+        remote = mocked_run.call_args.args[0][-1]
+        self.assertEqual(
+            remote,
+            "cd -- /project && exec awk '/^[0-9]/{print NR, $0}' Instance/real_data/50_1.txt",
+        )
+
+    @mock.patch("srd.subprocess.run")
     def test_nonzero_remote_exit_is_a_normal_result(self, mocked_run: mock.Mock) -> None:
         mocked_run.return_value = subprocess.CompletedProcess([], 2, b"", b"bad option\n")
         args = ssh_args(cwd="/tmp", timeout=30, max_output_bytes=1024 * 1024, command=["false"])

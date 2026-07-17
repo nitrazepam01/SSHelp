@@ -20,6 +20,19 @@ Monitoring loop:
 
 Use `job list` after context loss. If no offset is known, read from zero and do not claim old output is new.
 
+## Shell Boundaries And Quoting
+
+Identify the shell that launches SSHelp before choosing syntax. Error prefixes are evidence: `zsh: unmatched '` means zsh parsed the submitted command, even if the text was intended for PowerShell. Do not send PowerShell-only `$env:NAME` or `@'...'@` forms to zsh/bash, and do not send POSIX-only quoting to PowerShell without adapting it.
+
+Prefer argv-style `exec` calls and let SSHelp quote each remote argument:
+
+```powershell
+python $SSHelp exec --host lab-host --cwd /project -- head -5 Instance/real_data/50_1.txt
+python $SSHelp exec --host lab-host --cwd /project -- awk '/^[0-9]/{print NR, $0}' Instance/real_data/50_1.txt
+```
+
+Do not wrap these calls in another `ssh` command. For several independent checks, issue several bounded `exec` calls. For genuine pipelines, redirection, or multiline control flow, use a reviewed helper script or explicitly invoke the known remote shell; keep its script text as one correctly formed argument for the actual local shell. `shell=False` protects the local launch and `shlex.join` protects remote argv, but neither can infer the intent of a pre-broken shell program.
+
 ## Quiet-Job Diagnosis
 
 Run `job diagnose` when output is idle but status remains `running`. It derives the PID only from the exact tmux job and reports descendants, CPU, RSS, log mtime, GPU attribution, process states, and wait channels.

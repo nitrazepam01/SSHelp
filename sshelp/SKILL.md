@@ -44,6 +44,8 @@ Use a one-shot command when it is non-interactive, bounded, and expected to fini
 python $SSHelp exec --host lab-host --cwd /project --timeout 30 -- git status --short
 ```
 
+Pass the executable and each argument after `--`; do not build a nested `ssh ...` command or wrap it in a shell-specific here-string. Match syntax to the shell that actually launches SSHelp: PowerShell forms such as `$env:USERPROFILE` and `@'...'@` are invalid in zsh/bash. An error such as `zsh: unmatched '` identifies the parsing shell. Prefer separate `exec` calls or a reviewed helper script for multiline logic. SSHelp quotes argv safely but cannot repair an already malformed `sh -c` string. Read [operations.md](references/operations.md) when shell syntax, pipelines, or redirection are involved.
+
 Use a persistent job when it needs a PTY, live output, input, disconnect recovery, or may run longer:
 
 ```powershell
