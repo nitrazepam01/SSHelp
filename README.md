@@ -15,6 +15,7 @@ SSHelp is distributed as a repository-local Codex Skill under [`sshelp/`](sshelp
 - Search remote source trees before downloading files.
 - Checkout selected files locally, edit with normal tools, detect conflicts, and commit with per-file atomic replacement.
 - Bootstrap fixed prerequisites on a new Linux host after explicit authorization.
+- Diagnose Windows OpenSSH client/server authentication, host-key, port-mapping, quoting, and transfer boundaries without pretending the Linux runtime supports Windows remotes.
 
 ## Quick Start
 
@@ -23,6 +24,8 @@ Requirements:
 - Python 3.11 or newer on the local machine.
 - OpenSSH client with a configured host alias and public-key authentication.
 - A Linux SSH host. SSHelp can install its fixed remote prerequisites with explicit approval.
+
+The automated `exec`, tmux job, observer, diagnostic, search, and transactional file workflows target Linux remotes. The Skill also contains guarded Windows OpenSSH guidance, but does not yet provide a Windows remote runtime backend.
 
 From the cloned repository, resolve the Skill entry once, then keep your shell in the project you are actually working on:
 

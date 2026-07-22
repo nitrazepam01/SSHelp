@@ -1,6 +1,6 @@
 ---
 name: sshelp
-description: Execute, observe, diagnose, and safely edit work on Linux SSH hosts. Use when Codex needs a bounded one-shot command, persistent tmux job, incremental terminal output, read-only Windows Terminal or ttyd observation, multi-job dashboard, process/resource/GPU/port diagnosis, remote file discovery, or transactional checkout and atomic commit of selected files.
+description: Execute, observe, diagnose, and safely edit work on Linux SSH hosts, and diagnose Windows OpenSSH client/server connections. Use when Codex needs a bounded one-shot command, persistent tmux job, incremental terminal output, read-only Windows Terminal or ttyd observation, multi-job dashboard, process/resource/GPU/port diagnosis, remote file discovery, transactional checkout and atomic commit of selected files, or Windows SSH guidance for authentication, host keys, port-mapped endpoints, PowerShell quoting, and file transfer.
 ---
 
 # SSHelp
@@ -22,10 +22,13 @@ If the user works in `D:\Project`, local state defaults to `D:\Project\.sshelp\c
 
 ## Preconditions
 
+- Classify three boundaries before acting: the local launching shell, the remote operating system/default shell, and any proxy or local port mapping between them.
 - Use a configured SSH host alias with public-key or `ssh-agent` authentication.
 - Keep `BatchMode=yes`; pass `--ssh-config` or `SSHELP_SSH_CONFIG` when needed.
 - Require Linux, Python 3, tmux, and standard core utilities. Require `rg` for text search and ttyd only for its Web backend.
 - Never read, copy, log, or request private-key content or passwords.
+
+The Python runtime commands in this Skill target Linux hosts. Do not run `exec`, `job`, `web`, `remote`, `file`, or `host install` against a Windows OpenSSH server: they assume POSIX paths, shell syntax, and Linux tools. For a Windows client connecting to Linux, use the normal workflow. For Windows OpenSSH server connection, authentication, PowerShell, port mapping, or file-transfer work, read [windows-ssh.md](references/windows-ssh.md) and stay within its native OpenSSH procedures.
 
 On a new host, install prerequisites only after explicit authorization, then verify them:
 
@@ -101,6 +104,7 @@ Terminal, Web, and dashboard observers are read-only by default and bind Web acc
 
 ## Safety
 
+- Never store a password in a script, Markdown file, command, environment snapshot, or subprocess input. OpenSSH password prompts are terminal-driven; stdin automation is neither reliable nor acceptable.
 - Send text or control keys only when authorized. Prefer `job stop --mode interrupt`; never use SIGKILL.
 - Run `host install --yes` only after the user explicitly authorizes remote package installation.
 - Operate only on exact validated `sshelp-` jobs and `sshelp-observer-` sessions. Accept old `srd-` names only for compatibility with existing jobs.

@@ -16,6 +16,7 @@ class PublicRepositoryTests(unittest.TestCase):
             ".gitignore",
             ".github/workflows/tests.yml",
             "sshelp/SKILL.md",
+            "sshelp/references/windows-ssh.md",
         ):
             self.assertTrue((ROOT / relative).is_file(), relative)
 
@@ -24,10 +25,23 @@ class PublicRepositoryTests(unittest.TestCase):
             ROOT / "sshelp" / "SKILL.md",
             ROOT / "sshelp" / "references" / "operations.md",
             ROOT / "sshelp" / "references" / "remote-files.md",
+            ROOT / "sshelp" / "references" / "windows-ssh.md",
         ]
         text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
         for private_value in ("10.83.226.157", "nitrazepam", "lenovo-lan", r"D:\Code\sshelp"):
             self.assertNotIn(private_value, text)
+
+    def test_windows_ssh_guidance_preserves_platform_and_security_boundaries(self) -> None:
+        text = (ROOT / "sshelp" / "references" / "windows-ssh.md").read_text(encoding="utf-8")
+        for required in (
+            "HostKeyAlias",
+            "administrators_authorized_keys",
+            "Missing file specification after redirection operator",
+            "subprocess.communicate()",
+            "SSHelp runtime commands are not Windows-remote compatible",
+        ):
+            self.assertIn(required, text)
+        self.assertNotIn("StrictHostKeyChecking no", text)
 
     def test_generated_and_local_state_is_ignored(self) -> None:
         ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")

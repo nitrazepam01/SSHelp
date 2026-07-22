@@ -11,7 +11,9 @@ Include the affected command, expected boundary, observed behavior, and a minima
 SSHelp is designed to:
 
 - Use public-key or ssh-agent authentication for automated commands.
+- Reject stored-password, stdin-password, SendKeys, or password-fallback automation.
 - Keep host-key verification enabled.
+- Give each port-mapped endpoint a stable host-key identity; never erase a mismatch without independent verification.
 - Avoid reading or transporting private-key contents.
 - Restrict task control to validated SSHelp tmux sessions.
 - Keep observers read-only and bound to loopback.
@@ -20,6 +22,8 @@ SSHelp is designed to:
 - Avoid SIGKILL, arbitrary PID control, and recursive remote cleanup.
 
 Report any behavior that crosses these boundaries privately.
+
+If a real password, private key, host inventory, or credential-bearing connection script is exposed in a file, prompt, commit, or message, stop using it and rotate the credential. Removing the text does not revoke a credential that has already been disclosed.
 
 ## Supported Versions
 
